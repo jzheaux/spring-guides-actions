@@ -1,0 +1,32 @@
+<settings>
+  <servers>
+    <server>
+      <id>spring-enterprise-subscription</id>
+      <username>__SPRING_ENTERPRISE_REPOSITORY_USERNAME__</username>
+      <password>__SPRING_ENTERPRISE_REPOSITORY_PASSWORD__</password>
+    </server>
+  </servers>
+  <profiles>
+    <profile>
+      <id>spring-enterprise</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>spring-enterprise-subscription</id>
+          <url>__SPRING_ENTERPRISE_REPOSITORY_URL__</url>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>spring-enterprise-subscription</id>
+          <url>__SPRING_ENTERPRISE_REPOSITORY_URL__</url>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>spring-enterprise</activeProfile>
+  </activeProfiles>
+</settings>
