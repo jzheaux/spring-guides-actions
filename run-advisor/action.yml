@@ -53,8 +53,8 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      advisor build-config get -b=mvnw -p=${DIRECTORY}
-      advisor upgrade-plan apply --push --from-yml
+      ./advisor build-config get -b=mvnw -p=${DIRECTORY}
+      ./advisor upgrade-plan apply --push --from-yml
   - uses: spring-io/spring-gradle-build-action@v2
     with:
       java-version: 17
@@ -73,5 +73,5 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      advisor build-config get -b=gradlew -p=${DIRECTORY}
-      advisor upgrade-plan apply --push --from-yml
+      ./advisor build-config get -b=gradlew -p=${DIRECTORY}
+      ./advisor upgrade-plan apply --push --from-yml
