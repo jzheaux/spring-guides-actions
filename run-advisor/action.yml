@@ -33,7 +33,7 @@ runs:
       ADVISOR_VERSION: ${{ inputs.advisor-version }}
       ADVISOR_REPOSITORY: ${{ inputs.spring-enterprise-repository }}
     run: |
-      curl -v -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "${ADVISOR_REPOSITORY}/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
+      curl -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "${ADVISOR_REPOSITORY}/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
       tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
   - uses: actions/setup-java@v5.1.0
     with:
@@ -44,12 +44,6 @@ runs:
     run: |
       mkdir -p "$HOME/.m2"
       cp "$GITHUB_ACTION_PATH/settings.xml" "$HOME/.m2/settings.xml"
-  - id: compile-maven-project
-    shell: bash
-    env:
-      DIRECTORY: ${{ inputs.directory }}
-    run: |
-      mvn -f ${DIRECTORY}/pom.xml compile
   - id: run-advisor-maven
     shell: bash
     env:
@@ -60,7 +54,6 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
       ./advisor build-config get -b=mvnw -p=${DIRECTORY} -d
-      find . -name pom.xml
       ./advisor upgrade-plan apply -b=mvnw -p=${DIRECTORY} -d --push --from-yml 
   - uses: spring-io/spring-gradle-build-action@v2
     with:
@@ -71,12 +64,6 @@ runs:
     run: |
       mkdir -p "$HOME/.gradle"
       cp "$GITHUB_ACTION_PATH/init.gradle" "$HOME/.gradle/init.gradle"
-  - id: compile-gradle-project
-    shell: bash
-    env:
-      DIRECTORY: ${{ inputs.directory }}
-    run: |
-      ./gradlew -p ${DIRECTORY} compileJava
   - id: run-advisor-gradle
     shell: bash
     env:
@@ -87,7 +74,7 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
       ./advisor build-config get -b=gradlew -p=${DIRECTORY} -d
-      ./advisor upgrade-plan apply --push --from-yml -p=${DIRECTORY} -d
+      ./advisor upgrade-plan apply -b=gradlew -p=${DIRECTORY} -d --push --from-yml
   - id: show-advisor-errors
     if: failure()
     shell: bash
