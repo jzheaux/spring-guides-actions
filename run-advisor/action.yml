@@ -40,6 +40,7 @@ runs:
       java-version: 17
       distribution: temurin
   - id: copy-maven-settings
+    shell: bash
     run: |
       cp settings.xml $HOME/.m2/settings.xml
   - id: run-advisor-maven
@@ -58,6 +59,7 @@ runs:
       java-version: 17
       distribution: temurin
   - id: copy-gradle-settings
+    shell: bash
     run: |
       cp init.gradle $HOME/.gradle/init.gradle
   - id: run-advisor-gradle
