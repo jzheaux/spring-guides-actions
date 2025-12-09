@@ -54,7 +54,7 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
       ./advisor build-config get -b=mvnw -p=${DIRECTORY}
-      ./advisor upgrade-plan apply --push --from-yml
+      ./advisor upgrade-plan apply --push --from-yml -p=${DIRECTORY}
   - uses: spring-io/spring-gradle-build-action@v2
     with:
       java-version: 17
@@ -74,7 +74,7 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
       ./advisor build-config get -b=gradlew -p=${DIRECTORY}
-      ./advisor upgrade-plan apply --push --from-yml
+      ./advisor upgrade-plan apply --push --from-yml -p=${DIRECTORY}
   - id: show-advisor-errors
     if: failure()
     shell: bash
