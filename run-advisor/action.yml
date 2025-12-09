@@ -34,6 +34,10 @@ runs:
     run: |
       curl -v -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "https://packages.broadcom.com/artifactory/spring-enterprise/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
       tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
+  - uses: actions/setup-java@v5.1.0
+    with:
+      java-version: 17
+      distribution: temurin
   - id: create-settings-xml
     shell: bash
     env:
@@ -50,6 +54,10 @@ runs:
     run: |
       advisor build-config get -b=mvnw -p=${DIRECTORY}
       advisor upgrade-plan apply --push --from-yml
+  - uses: spring-io/spring-gradle-build-action@v2
+    with:
+      java-version: 17
+      distribution: temurin
   - id: create-init-gradle
     shell: bash
     env:
