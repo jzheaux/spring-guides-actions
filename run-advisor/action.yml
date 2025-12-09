@@ -75,3 +75,19 @@ runs:
     run: |
       ./advisor build-config get -b=gradlew -p=${DIRECTORY}
       ./advisor upgrade-plan apply --push --from-yml
+  - id: show-advisor-errors
+    if: failure()
+    shell: bash
+    run: |
+      shopt -s nullglob
+      logs=(.advisor/errors/*.log)
+      if [ ${#logs[@]} -eq 0 ]; then
+        echo "No advisor error logs found."
+        exit 0
+      fi
+
+      for f in "${logs[@]}"; do
+        echo "----- BEGIN $f -----"
+        cat "$f"
+        echo "----- END $f -----"
+      done
