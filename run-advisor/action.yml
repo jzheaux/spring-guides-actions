@@ -42,7 +42,8 @@ runs:
   - id: copy-maven-settings
     shell: bash
     run: |
-      cp settings.xml $HOME/.m2/settings.xml
+      mkdir -p "$HOME/.m2"
+      cp "$GITHUB_ACTION_PATH/settings.xml" "$HOME/.m2/settings.xml"
   - id: run-advisor-maven
     shell: bash
     env:
@@ -61,7 +62,8 @@ runs:
   - id: copy-gradle-settings
     shell: bash
     run: |
-      cp init.gradle $HOME/.gradle/init.gradle
+      mkdir -p "$HOME/.gradle"
+      cp "$GITHUB_ACTION_PATH/init.gradle" "$HOME/.gradle/init.gradle"
   - id: run-advisor-gradle
     shell: bash
     env:
