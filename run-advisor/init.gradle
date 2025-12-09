@@ -7,11 +7,11 @@ class SpringEnterpriseRepositoryPlugin implements Plugin<Gradle> {
                 // add the Spring enterprise repository
                 maven {
                     name "SPRING_ENTERPRISE_REPO"
-                    url "__SPRING_ENTERPRISE_REPOSITORY_URL__"
+                    url "${System.getenv('SPRING_ENTERPRISE_REPOSITORY_URL')}"
 
                     credentials {
-                      username "__SPRING_ENTERPRISE_REPOSITORY_USERNAME__"
-                      password "__SPRING_ENTERPRISE_REPOSITORY_PASSWORD__"
+                      username "${System.getenv('SPRING_ENTERPRISE_REPOSITORY_USERNAME')}"
+                      password "${System.getenv('SPRING_ENTERPRISE_REPOSITORY_PASSWORD')}"
                     }
                     authentication {
                       basic(BasicAuthentication)

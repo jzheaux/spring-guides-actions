@@ -2,8 +2,8 @@
   <servers>
     <server>
       <id>spring-enterprise-subscription</id>
-      <username>__SPRING_ENTERPRISE_REPOSITORY_USERNAME__</username>
-      <password>__SPRING_ENTERPRISE_REPOSITORY_PASSWORD__</password>
+      <username>${env.SPRING_ENTERPRISE_REPOSITORY_USERNAME}</username>
+      <password>${env.SPRING_ENTERPRISE_REPOSITORY_PASSWORD}</password>
     </server>
   </servers>
   <profiles>
@@ -15,13 +15,13 @@
       <repositories>
         <repository>
           <id>spring-enterprise-subscription</id>
-          <url>__SPRING_ENTERPRISE_REPOSITORY_URL__</url>
+          <url>${env.SPRING_ENTERPRISE_REPOSITORY_URL}</url>
         </repository>
       </repositories>
       <pluginRepositories>
         <pluginRepository>
           <id>spring-enterprise-subscription</id>
-          <url>__SPRING_ENTERPRISE_REPOSITORY_URL__</url>
+          <url>${env.SPRING_ENTERPRISE_REPOSITORY_URL}</url>
         </pluginRepository>
       </pluginRepositories>
     </profile>
