@@ -32,7 +32,7 @@ runs:
       ADVISOR_TOKEN: ${{ inputs.spring-enterprise-token }}
       ADVISOR_VERSION: ${{ inputs.advisor-version }}
     run: |
-      curl -L -H -v "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "https://packages.broadcom.com/artifactory/spring-enterprise/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
+      curl -v -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "https://packages.broadcom.com/artifactory/spring-enterprise/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
       tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
   - id: create-settings-xml
     shell: bash
