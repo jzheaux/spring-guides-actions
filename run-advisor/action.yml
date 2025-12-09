@@ -78,9 +78,11 @@ runs:
   - id: show-advisor-errors
     if: failure()
     shell: bash
+    env:
+      DIRECTORY: ${{ inputs.directory }}
     run: |
       shopt -s nullglob
-      logs=(.advisor/errors/*.log)
+      logs=($DIRECTORY/.advisor/errors/*.log)
       if [ ${#logs[@]} -eq 0 ]; then
         echo "No advisor error logs found."
         exit 0
