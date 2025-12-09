@@ -44,6 +44,12 @@ runs:
     run: |
       mkdir -p "$HOME/.m2"
       cp "$GITHUB_ACTION_PATH/settings.xml" "$HOME/.m2/settings.xml"
+  - id: compile-maven-project
+    shell: bash
+    env:
+      DIRECTORY: ${{ inputs.directory }}
+    run: |
+      mvn -f ${DIRECTORY}/pom.xml compile
   - id: run-advisor-maven
     shell: bash
     env:
@@ -53,8 +59,8 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      ./advisor build-config get -b=mvnw -p=${DIRECTORY} -d && \
-      find . -name pom.xml && \
+      ./advisor build-config get -b=mvnw -p=${DIRECTORY} -d
+      find . -name pom.xml
       ./advisor upgrade-plan apply -b=mvnw -p=${DIRECTORY} -d --push --from-yml 
   - uses: spring-io/spring-gradle-build-action@v2
     with:
@@ -65,6 +71,12 @@ runs:
     run: |
       mkdir -p "$HOME/.gradle"
       cp "$GITHUB_ACTION_PATH/init.gradle" "$HOME/.gradle/init.gradle"
+  - id: compile-gradle-project
+    shell: bash
+    env:
+      DIRECTORY: ${{ inputs.directory }}
+    run: |
+      ./gradlew -p ${DIRECTORY} compileJava
   - id: run-advisor-gradle
     shell: bash
     env:
