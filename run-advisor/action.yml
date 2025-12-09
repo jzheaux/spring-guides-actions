@@ -53,8 +53,8 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      ./advisor build-config get -b=mvnw -p=${DIRECTORY} -d
-      find . -name pom.xml
+      ./advisor build-config get -b=mvnw -p=${DIRECTORY} -d && \
+      find . -name pom.xml && \
       ./advisor upgrade-plan apply -b=mvnw -p=${DIRECTORY} -d --push --from-yml 
   - uses: spring-io/spring-gradle-build-action@v2
     with:
