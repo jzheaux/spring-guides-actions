@@ -9,38 +9,22 @@ jobs:
   discover-guides:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ steps.discover.outputs.matrix }}
       github-app-token: ${{ steps.generate-token.outputs.token }}
     steps:
       - name: Generate GitHub App Token
         id: generate-token
-        uses: ./.github/actions/generate-token
+        uses: actions/create-github-app-token@v1
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Find guide repositories and directories
-        id: set-matrix
-        env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          GH_ORG: ${{ github.repository_owner }}
-        run: |
-          repos=$(gh repo list $GH_ORG --limit 1000 --json name --jq '.[] | .name | select(startswith("gs-"))')
-          matrix="[]"
-          for repo in $repos; do
-            echo "Checking repo: $repo"
-            temp_dir=$(mktemp -d)
-            gh repo clone "$GH_ORG/$repo" "$temp_dir" -- --depth 1
-            for dir in initial complete initial-kotlin complete-kotlin; do
-              if [ -d "$temp_dir/$dir" ]; then
-                echo "Found directory: $dir in $repo"
-                entry="{\"repo\":\"$GH_ORG/$repo\", \"directory\":\"$dir\"}"
-                matrix=$(echo "$matrix" | jq --argjson entry "$entry" '. + [$entry]')
-              fi
-            done
-            rm -rf "$temp_dir"
-          done
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+        id: discover
+        uses: ./.github/actions/discover-guides
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          org: ${{ github.repository_owner }}
 
   run-advisor-on-guides:
     needs: discover-guides
@@ -55,7 +39,7 @@ jobs:
         id: download-advisor
         env:
           ADVISOR_TOKEN: ${{ secrets.SPRING_ENTERPRISE_TOKEN }}
-          ADVISOR_VERSION: '1.5.2'
+          ADVISOR_VERSION: ${{ vars.ADVISOR_VERSION }}
           ADVISOR_REPOSITORY: 'https://packages.broadcom.com/artifactory/spring-enterprise'
         run: |
           curl -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "${ADVISOR_REPOSITORY}/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
