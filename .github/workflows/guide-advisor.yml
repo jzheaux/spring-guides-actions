@@ -6,11 +6,11 @@ on:
   workflow_dispatch: # Allow manual runs
 
 jobs:
-  discover-guides:
+  list-guides:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
-      github-app-token: ${{ steps.generate-token.outputs.token }}
+      repository-token: ${{ steps.generate-token.outputs.token }}
     steps:
       - name: Generate GitHub App Token
         id: generate-token
@@ -27,13 +27,13 @@ jobs:
           org: ${{ github.repository_owner }}
 
   run-advisor-on-guides:
-    needs: discover-guides
-    if: fromJSON(needs.discover-guides.outputs.matrix) != '[]'
+    needs: list-guides
+    if: fromJSON(needs.list-guides.outputs.matrix) != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.discover-guides.outputs.matrix) }}
+        include: ${{ fromJSON(needs.list-guides.outputs.matrix) }}
     steps:
       - name: Download Advisor
         id: download-advisor
@@ -46,12 +46,12 @@ jobs:
           tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
           echo "advisor-path=$(pwd)" >> $GITHUB_OUTPUT
 
-      - name: Run Advisor on ${{ matrix.repo }} (${{ matrix.directory }})
+      - name: Run Advisor on ${{ matrix.repo }} (${{ matrix.dir }})
         uses: ./run-advisor
         with:
           spring-enterprise-token: ${{ secrets.SPRING_ENTERPRISE_TOKEN }}
           spring-enterprise-username: ${{ secrets.SPRING_ENTERPRISE_USERNAME }}
           advisor-path: ${{ steps.download-advisor.outputs.advisor-path }}
-          target-repo: ${{ matrix.repo }}
-          directory: ${{ matrix.directory }}
-          github-app-token: ${{ needs.discover-guides.outputs.github-app-token }}
+          project-path: ${{ matrix.dir }}
+          repository: ${{ matrix.repo }}
+          repository-token: ${{ needs.list-guides.outputs.repository-token }}

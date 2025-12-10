@@ -25,7 +25,7 @@ async function run() {
             path: dir,
           });
           core.info(`Found directory: ${dir} in ${repo.name}`);
-          matrix.push({ repo: repo.full_name, directory: dir });
+          matrix.push({ repo: repo.full_name, dir: dir });
         } catch (error) {
           if (error.status !== 404) {
             throw error;

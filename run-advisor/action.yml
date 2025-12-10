@@ -8,25 +8,26 @@ inputs:
   spring-enterprise-username:
     description: 'The repository username'
     required: true
+  repository-token:
+    description: 'A GitHub App token with permissions to checkout the target repository'
+    required: true
+
+  advisor-path:
+    description: 'The path to the downloaded Spring App Advisor executable; defaults to the current working directory'
+    required: false
+    default: '.'
+  project-path:
+    description: 'The path to  in the project to analyze; defaults to the root of the project'
+    required: false
+    default: '.'
+  repository:
+    description: 'The target repository to analyze in the format owner/repo'
+    required: false
+    default: ${{ github.repository }}
   spring-enterprise-repository:
     description: 'The repository containing the Spring App Advisor recipes'
     required: false
     default: 'https://packages.broadcom.com/artifactory/spring-enterprise'
-  advisor-path:
-    description: 'The path to the downloaded Spring App Advisor executable'
-    required: false
-    default: '.'
-  target-repo:
-    description: 'The target repository to analyze in the format owner/repo'
-    required: false
-    default: ${{ github.repository }}
-  directory:
-    description: 'The directory in the project to analyze; defaults to the root of the project'
-    required: false
-    default: '.'
-  github-app-token:
-    description: 'A GitHub App token with permissions to checkout the target repository'
-    required: true
 
 runs:
   using: 'composite'
@@ -34,9 +35,9 @@ runs:
   - name: Checkout target repository
     uses: actions/checkout@v4
     with:
-      repository: ${{ inputs.target-repo }}
-      path: target-repo
-      token: ${{ inputs.github-app-token }}
+      repository: ${{ inputs.repository }}
+      path: ${{ inputs.repository }}
+      token: ${{ inputs.repository-token }}
 
   - uses: actions/setup-java@v4
     with:
@@ -52,18 +53,18 @@ runs:
   - id: run-advisor-maven
     shell: bash
     env:
-      SCAN_PATH: target-repo/${{ inputs.directory }}
+      PROJECT_PATH: ${{ github.workspace }}/${{ inputs.repository }}/${{ inputs.project-path }}
       ADVISOR_EXEC: ${{ inputs.advisor-path }}/advisor
-      GIT_TOKEN_FOR_PRS: ${{ inputs.github-app-token }}
+      GIT_TOKEN_FOR_PRS: ${{ inputs.repository-token }}
       SPRING_ENTERPRISE_REPOSITORY_URL: ${{ inputs.spring-enterprise-repository }}
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      if [ ! -f "$SCAN_PATH/mvnw" ]; then
+      if [ ! -f "$PROJECT_PATH/mvnw" ]; then
         echo "mvnw not found in $SCAN_PATH, skipping Maven execution."
         exit 0
       fi
-      cd $SCAN_PATH
+      cd $PROJECT_PATH
       $ADVISOR_EXEC build-config get -b=mvnw -d
       $ADVISOR_EXEC upgrade-plan apply -b=mvnw -d --push --from-yml
 
@@ -81,18 +82,18 @@ runs:
   - id: run-advisor-gradle
     shell: bash
     env:
-      SCAN_PATH: target-repo/${{ inputs.directory }}
+      PROJECT_PATH: ${{ github.workspace }}/${{ inputs.repository }}/${{ inputs.directory }}
       ADVISOR_EXEC: ${{ inputs.advisor-path }}/advisor
-      GIT_TOKEN_FOR_PRS: ${{ inputs.github-app-token }}
+      GIT_TOKEN_FOR_PRS: ${{ inputs.repository-token }}
       SPRING_ENTERPRISE_REPOSITORY_URL: ${{ inputs.spring-enterprise-repository }}
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      if [ ! -f "$SCAN_PATH/gradlew" ]; then
+      if [ ! -f "$PROJECT_PATH/gradlew" ]; then
         echo "gradlew not found in $SCAN_PATH, skipping Gradle execution."
         exit 0
       fi
-      cd $SCAN_PATH
+      cd $GITHUB_WORKSPACE/$PROJECT_PATH
       $ADVISOR_EXEC build-config get -b=gradlew -d
       $ADVISOR_EXEC upgrade-plan apply -b=gradlew -d --push --from-yml
 
@@ -100,10 +101,10 @@ runs:
     if: failure()
     shell: bash
     env:
-      SCAN_PATH: target-repo/${{ inputs.directory }}
+      PROJECT_PATH: ${{ github.workspace }}/${{ inputs.repository }}/${{ inputs.directory }}
     run: |
       shopt -s nullglob
-      logs=($SCAN_PATH/.advisor/errors/*.log)
+      logs=($PROJECT_PATH/.advisor/errors/*.log)
       if [ ${#logs[@]} -eq 0 ]; then
         echo "No advisor error logs found."
         exit 0
