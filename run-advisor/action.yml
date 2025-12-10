@@ -54,8 +54,8 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
       cd $GITHUB_WORKSPACE/${DIRECTORY}
-      ./advisor build-config get -b=mvnw -d
-      ./advisor upgrade-plan apply -b=mvnw -d --push --from-yml 
+      $GITHUB_WORKSPACE/advisor build-config get -b=mvnw -d
+      $GITHUB_WORKSPACE/advisor upgrade-plan apply -b=mvnw -d --push --from-yml 
   - uses: spring-io/spring-gradle-build-action@v2
     with:
       java-version: 17
@@ -75,8 +75,8 @@ runs:
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
       cd $GITHUB_WORKSPACE/${DIRECTORY}
-      ./advisor build-config get -b=gradlew -d
-      ./advisor upgrade-plan apply -b=gradlew -d --push --from-yml
+      $GITHUB_WORKSPACE/advisor build-config get -b=gradlew -d
+      $GITHUB_WORKSPACE/advisor upgrade-plan apply -b=gradlew -d --push --from-yml
   - id: show-advisor-errors
     if: failure()
     shell: bash
