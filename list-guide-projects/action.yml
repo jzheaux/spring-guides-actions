@@ -1,4 +1,4 @@
-name: 'Discover Guides'
+name: 'List Guide Projects'
 description: 'Finds guide repositories and their subdirectories'
 inputs:
   token:
@@ -11,5 +11,5 @@ outputs:
   matrix:
     description: 'A JSON matrix of the guide repositories and directories'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'index.js'

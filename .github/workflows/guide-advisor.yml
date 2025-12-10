@@ -21,7 +21,7 @@ jobs:
 
       - name: Find guide repositories and directories
         id: discover
-        uses: ./.github/actions/discover-guides
+        uses: ./list-guide-projects
         with:
           token: ${{ steps.generate-token.outputs.token }}
           org: ${{ github.repository_owner }}
