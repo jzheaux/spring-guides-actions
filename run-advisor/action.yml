@@ -1,90 +1,109 @@
 name: 'Run Spring App Advisor'
-description: 'Runs Spring Application Advisor against the project'
+description: 'Runs Spring Application Advisor against a target project'
 
 inputs:
   spring-enterprise-token:
-    description: 'A token with permissions to download Spring App Advisor and authenticate to the recipe repository'
+    description: 'A token to authenticate to the recipe repository'
     required: true
   spring-enterprise-username:
     description: 'The repository username'
     required: true
-
-  advisor-version:
-    description: 'The version of Spring App Advisor to use'
-    required: false
-    default: '1.5.2'
-  directory:
-    description: 'The directory in the project to analyze; defaults to the root of the project'
-    required: false
-    default: '.'
   spring-enterprise-repository:
     description: 'The repository containing the Spring App Advisor recipes'
     required: false
     default: 'https://packages.broadcom.com/artifactory/spring-enterprise'
+  advisor-path:
+    description: 'The path to the downloaded Spring App Advisor executable'
+    required: false
+    default: '.'
+  target-repo:
+    description: 'The target repository to analyze in the format owner/repo'
+    required: false
+    default: ${{ github.repository }}
+  directory:
+    description: 'The directory in the project to analyze; defaults to the root of the project'
+    required: false
+    default: '.'
+  github-app-token:
+    description: 'A GitHub App token with permissions to checkout the target repository'
+    required: true
 
 runs:
   using: 'composite'
   steps:
-  - id: download-advisor
-    name: "Download Advisor ${{ inputs.advisor-version }}"
-    shell: bash
-    env:
-      ADVISOR_TOKEN: ${{ inputs.spring-enterprise-token }}
-      ADVISOR_VERSION: ${{ inputs.advisor-version }}
-      ADVISOR_REPOSITORY: ${{ inputs.spring-enterprise-repository }}
-    run: |
-      curl -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "${ADVISOR_REPOSITORY}/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
-      tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
-  - uses: actions/setup-java@v5.1.0
+  - name: Checkout target repository
+    uses: actions/checkout@v4
+    with:
+      repository: ${{ inputs.target-repo }}
+      path: target-repo
+      token: ${{ inputs.github-app-token }}
+
+  - uses: actions/setup-java@v4
     with:
       java-version: 17
       distribution: temurin
+
   - id: copy-maven-settings
     shell: bash
     run: |
       mkdir -p "$HOME/.m2"
       cp "$GITHUB_ACTION_PATH/settings.xml" "$HOME/.m2/settings.xml"
+
   - id: run-advisor-maven
     shell: bash
     env:
-      DIRECTORY: ${{ inputs.directory }}
-      GIT_TOKEN_FOR_PRS: ${{ github.token }}
+      SCAN_PATH: target-repo/${{ inputs.directory }}
+      ADVISOR_EXEC: ${{ inputs.advisor-path }}/advisor
+      GIT_TOKEN_FOR_PRS: ${{ inputs.github-app-token }}
       SPRING_ENTERPRISE_REPOSITORY_URL: ${{ inputs.spring-enterprise-repository }}
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      cd $GITHUB_WORKSPACE/${DIRECTORY}
-      $GITHUB_WORKSPACE/advisor build-config get -b=mvnw -d
-      $GITHUB_WORKSPACE/advisor upgrade-plan apply -b=mvnw -d --push --from-yml 
+      if [ ! -f "$SCAN_PATH/mvnw" ]; then
+        echo "mvnw not found in $SCAN_PATH, skipping Maven execution."
+        exit 0
+      fi
+      cd $SCAN_PATH
+      $ADVISOR_EXEC build-config get -b=mvnw -d
+      $ADVISOR_EXEC upgrade-plan apply -b=mvnw -d --push --from-yml
+
   - uses: spring-io/spring-gradle-build-action@v2
     with:
       java-version: 17
       distribution: temurin
+
   - id: copy-gradle-settings
     shell: bash
     run: |
       mkdir -p "$HOME/.gradle"
       cp "$GITHUB_ACTION_PATH/init.gradle" "$HOME/.gradle/init.gradle"
+
   - id: run-advisor-gradle
     shell: bash
     env:
-      DIRECTORY: ${{ inputs.directory }}
-      GIT_TOKEN_FOR_PRS: ${{ github.token }}
+      SCAN_PATH: target-repo/${{ inputs.directory }}
+      ADVISOR_EXEC: ${{ inputs.advisor-path }}/advisor
+      GIT_TOKEN_FOR_PRS: ${{ inputs.github-app-token }}
       SPRING_ENTERPRISE_REPOSITORY_URL: ${{ inputs.spring-enterprise-repository }}
       SPRING_ENTERPRISE_REPOSITORY_USERNAME: ${{ inputs.spring-enterprise-username }}
       SPRING_ENTERPRISE_REPOSITORY_PASSWORD: ${{ inputs.spring-enterprise-token }}
     run: |
-      cd $GITHUB_WORKSPACE/${DIRECTORY}
-      $GITHUB_WORKSPACE/advisor build-config get -b=gradlew -d
-      $GITHUB_WORKSPACE/advisor upgrade-plan apply -b=gradlew -d --push --from-yml
+      if [ ! -f "$SCAN_PATH/gradlew" ]; then
+        echo "gradlew not found in $SCAN_PATH, skipping Gradle execution."
+        exit 0
+      fi
+      cd $SCAN_PATH
+      $ADVISOR_EXEC build-config get -b=gradlew -d
+      $ADVISOR_EXEC upgrade-plan apply -b=gradlew -d --push --from-yml
+
   - id: show-advisor-errors
     if: failure()
     shell: bash
     env:
-      DIRECTORY: ${{ inputs.directory }}
+      SCAN_PATH: target-repo/${{ inputs.directory }}
     run: |
       shopt -s nullglob
-      logs=($DIRECTORY/.advisor/errors/*.log)
+      logs=($SCAN_PATH/.advisor/errors/*.log)
       if [ ${#logs[@]} -eq 0 ]; then
         echo "No advisor error logs found."
         exit 0

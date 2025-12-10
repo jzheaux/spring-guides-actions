@@ -1,0 +1,57 @@
+name: Guide Advisor
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at midnight
+  workflow_dispatch: # Allow manual runs
+
+jobs:
+  discover-guides:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      github-app-token: ${{ steps.generate-token.outputs.token }}
+    steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Find guide repositories and directories
+        id: discover
+        uses: ./list-guide-projects
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          org: ${{ github.repository_owner }}
+
+  run-advisor-on-guides:
+    needs: discover-guides
+    if: fromJSON(needs.discover-guides.outputs.matrix) != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.discover-guides.outputs.matrix) }}
+    steps:
+      - name: Download Advisor
+        id: download-advisor
+        env:
+          ADVISOR_TOKEN: ${{ secrets.SPRING_ENTERPRISE_TOKEN }}
+          ADVISOR_VERSION: ${{ vars.ADVISOR_VERSION }}
+          ADVISOR_REPOSITORY: 'https://packages.broadcom.com/artifactory/spring-enterprise'
+        run: |
+          curl -L -H "Authorization: Bearer $ADVISOR_TOKEN" -o advisor-cli.tar "${ADVISOR_REPOSITORY}/com/vmware/tanzu/spring/application-advisor-cli-linux/${ADVISOR_VERSION}/application-advisor-cli-linux-${ADVISOR_VERSION}.tar"
+          tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
+          echo "advisor-path=$(pwd)" >> $GITHUB_OUTPUT
+
+      - name: Run Advisor on ${{ matrix.repo }} (${{ matrix.directory }})
+        uses: ./run-advisor
+        with:
+          spring-enterprise-token: ${{ secrets.SPRING_ENTERPRISE_TOKEN }}
+          spring-enterprise-username: ${{ secrets.SPRING_ENTERPRISE_USERNAME }}
+          advisor-path: ${{ steps.download-advisor.outputs.advisor-path }}
+          target-repo: ${{ matrix.repo }}
+          directory: ${{ matrix.directory }}
+          github-app-token: ${{ needs.discover-guides.outputs.github-app-token }}
